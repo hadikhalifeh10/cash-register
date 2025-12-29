@@ -1,0 +1,64 @@
+﻿<Window x:Class="cashregister.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:cashregister"
+        xmlns:vm="clr-namespace:cashregister.ViewModel"
+        mc:Ignorable="d"
+        Title="Cash Register" Height="450" Width="800">
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+    <Grid Margin="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="3*" />
+        </Grid.ColumnDefinitions>
+
+        <GroupBox Header="Items" Grid.Column="0" Margin="5">
+            <StackPanel>
+                <!-- Replace list with five buttons bound to individual commands -->
+                <UniformGrid Columns="1" Rows="5" Margin="0,0,0,10">
+                    <Button Content="Add Apple - $0.99" Command="{Binding AddItem1}" Height="40" />
+                    <Button Content="Add Banana - $0.59" Command="{Binding AddItem2}" Height="40" />
+                    <Button Content="Add Chocolate - $2.49" Command="{Binding AddItem3}" Height="40" />
+                    <Button Content="Add Bread - $1.99" Command="{Binding AddItem4}" Height="40" />
+                    <Button Content="Add Milk - $1.49" Command="{Binding AddItem5}" Height="40" />
+                </UniformGrid>
+            </StackPanel>
+        </GroupBox>
+
+        <GroupBox Header="Cart" Grid.Column="1" Margin="5">
+            <DockPanel>
+                <ListView ItemsSource="{Binding Cart}" Name="CartList" DockPanel.Dock="Top">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="150" />
+                            <GridViewColumn Header="Price" DisplayMemberBinding="{Binding Price, StringFormat=C}" Width="80" />
+                            <GridViewColumn Header="Qty" DisplayMemberBinding="{Binding Quantity}" Width="50" />
+                            <GridViewColumn Header="Subtotal" DisplayMemberBinding="{Binding Subtotal, StringFormat=C}" Width="80" />
+                            <GridViewColumn Header="Actions">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="-" Width="24" Height="24" Margin="2"
+                                                    Command="{Binding DataContext.RemoveFromCartCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0" DockPanel.Dock="Bottom">
+                    <TextBlock Text="Total: " FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,5,0" />
+                    <TextBlock Text="{Binding Total, StringFormat=C}" VerticalAlignment="Center" Width="100" />
+                    <Button Content="Pay" Margin="10,0,0,0" Width="100" Command="{Binding CheckoutCommand}" />
+                </StackPanel>
+            </DockPanel>
+        </GroupBox>
+    </Grid>
+</Window>

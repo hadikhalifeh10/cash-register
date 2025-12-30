@@ -6,32 +6,143 @@
         xmlns:local="clr-namespace:cashregister"
         xmlns:vm="clr-namespace:cashregister.ViewModel"
         mc:Ignorable="d"
-        Title="Cash Register" Height="450" Width="800">
+        Title="Cash Register" Height="600" Width="1100"
+        Background="#0B0B0D" Foreground="#F3F3F3">
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
+
+    <!-- Midnight color style resources: dark backgrounds, light foregrounds, lavender accents -->
+    <Window.Resources>
+        <SolidColorBrush x:Key="MidBackground" Color="#0B0B0D" />
+        <SolidColorBrush x:Key="PanelBackground" Color="#17171A" />
+        <SolidColorBrush x:Key="ControlBackground" Color="#1F1F23" />
+        <SolidColorBrush x:Key="ControlHover" Color="#2B2B30" />
+        <SolidColorBrush x:Key="Lavender" Color="#C39BD3" />
+        <SolidColorBrush x:Key="MutedText" Color="#DDE0E6" />
+
+        <!-- Shared base style for button-like controls to avoid TargetType mismatch when basing ToggleButton on Button -->
+        <Style x:Key="BaseButtonStyle" TargetType="ButtonBase">
+            <Setter Property="Background" Value="{StaticResource ControlBackground}" />
+            <Setter Property="Foreground" Value="{StaticResource MutedText}" />
+            <Setter Property="BorderBrush" Value="{StaticResource Lavender}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="6,4" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ButtonBase">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource ControlHover}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#232326" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Implicit Button style based on the shared base -->
+        <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}" />
+
+        <!-- ToggleButton uses the same visuals but must be based on ButtonBase (not Button) to avoid TargetType incompatibility -->
+        <Style TargetType="ToggleButton" BasedOn="{StaticResource BaseButtonStyle}" />
+
+        <!-- TextBox style for midnight theme -->
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="{StaticResource ControlBackground}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderBrush" Value="#FF4B4B4B" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="CaretBrush" Value="White" />
+        </Style>
+
+        <!-- GroupBox panel styling -->
+        <Style TargetType="GroupBox">
+            <Setter Property="Background" Value="{StaticResource PanelBackground}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderBrush" Value="#FF4B4B4B" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="6" />
+        </Style>
+
+        <!-- ListView styling -->
+        <Style TargetType="ListView">
+            <Setter Property="Background" Value="{StaticResource PanelBackground}" />
+            <Setter Property="Foreground" Value="{StaticResource MutedText}" />
+            <Setter Property="BorderBrush" Value="#2B2B30" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+
+        <!-- TextBlock default on theme -->
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource MutedText}" />
+        </Style>
+    </Window.Resources>
+
     <Grid Margin="10">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*" />
             <ColumnDefinition Width="3*" />
         </Grid.ColumnDefinitions>
 
-        <GroupBox Header="Items" Grid.Column="0" Margin="5">
+        <GroupBox Header="Items" Grid.Column="0" Margin="5" Padding="8">
             <StackPanel>
-                <!-- Replace list with five buttons bound to individual commands -->
-                <UniformGrid Columns="1" Rows="5" Margin="0,0,0,10">
-                    <Button Content="Add Apple - $0.99" Command="{Binding AddItem1}" Height="40" />
-                    <Button Content="Add Banana - $0.59" Command="{Binding AddItem2}" Height="40" />
-                    <Button Content="Add Chocolate - $2.49" Command="{Binding AddItem3}" Height="40" />
-                    <Button Content="Add Bread - $1.99" Command="{Binding AddItem4}" Height="40" />
-                    <Button Content="Add Milk - $1.49" Command="{Binding AddItem5}" Height="40" />
-                </UniformGrid>
+                <!-- Dynamically generate buttons from the ViewModel Buttons collection -->
+                <ItemsControl ItemsSource="{Binding Buttons}" MaxHeight="420" Margin="0,0,0,8" Padding="0,0,0,12">
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="Margin" Value="0,8,0,8" />
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <!-- Increased vertical spacing so groupbox bottom border remains visible -->
+                            <WrapPanel Orientation="Vertical" ItemWidth="220" ItemHeight="52" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <!-- Larger vertical margins for clearer separation and visible groupbox border -->
+                            <Button Content="{Binding Label}" Command="{Binding Command}" Height="44" Width="200" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Add new item UI -->
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                    <TextBox Width="120" Text="{Binding NewItemName, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBox Width="80" Margin="8,0,0,0" Text="{Binding NewItemPriceText, UpdateSourceTrigger=PropertyChanged}" />
+                    <Button Content="Add Item" Margin="8,0,0,0" Command="{Binding AddNewItemCommand}" />
+                </StackPanel>
             </StackPanel>
         </GroupBox>
 
-        <GroupBox Header="Cart" Grid.Column="1" Margin="5">
+        <GroupBox Header="Cart" Grid.Column="1" Margin="5" Padding="8">
             <DockPanel>
                 <ListView ItemsSource="{Binding Cart}" Name="CartList" DockPanel.Dock="Top">
+                    <ListView.Resources>
+                        <Style TargetType="GridViewColumnHeader">
+                            <Setter Property="Background" Value="{StaticResource PanelBackground}" />
+                            <Setter Property="Foreground" Value="{StaticResource MutedText}" />
+                            <Setter Property="BorderBrush" Value="{StaticResource Lavender}" />
+                            <Setter Property="BorderThickness" Value="0,0,0,1" />
+                            <Setter Property="Padding" Value="6" />
+                            <Setter Property="HorizontalContentAlignment" Value="Left" />
+                        </Style>
+                    </ListView.Resources>
                     <ListView.View>
                         <GridView>
                             <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="150" />
@@ -42,7 +153,7 @@
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">
-                                            <Button Content="-" Width="24" Height="24" Margin="2"
+                                            <Button Content="-" Width="24" Height="24" Margin="4"
                                                     Command="{Binding DataContext.RemoveFromCartCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}"/>
                                         </StackPanel>
@@ -53,10 +164,43 @@
                     </ListView.View>
                 </ListView>
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0" DockPanel.Dock="Bottom">
-                    <TextBlock Text="Total: " FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,5,0" />
-                    <TextBlock Text="{Binding Total, StringFormat=C}" VerticalAlignment="Center" Width="100" />
-                    <Button Content="Pay" Margin="10,0,0,0" Width="100" Command="{Binding CheckoutCommand}" />
+                <StackPanel Orientation="Vertical" HorizontalAlignment="Right" Margin="0,10,0,0" DockPanel.Dock="Bottom">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock Text="Subtotal: " VerticalAlignment="Center" Margin="0,0,5,0" />
+                        <TextBlock Text="{Binding Subtotal, StringFormat=C}" VerticalAlignment="Center" Width="100" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock Text="GST (5%): " VerticalAlignment="Center" Margin="0,0,5,0" />
+                        <TextBlock Text="{Binding Gst, StringFormat=C}" VerticalAlignment="Center" Width="100" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock Text="QST (9.975%): " VerticalAlignment="Center" Margin="0,0,5,0" />
+                        <TextBlock Text="{Binding Qst, StringFormat=C}" VerticalAlignment="Center" Width="100" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock Text="Total: " FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,5,0" />
+                        <TextBlock Text="{Binding Total, StringFormat=C}" VerticalAlignment="Center" Width="100" />
+
+                        <!-- Pay button replaced by ToggleButton + Popup -->
+                        <ToggleButton IsChecked="{Binding IsPayPopupOpen, Mode=TwoWay}" Content="Pay" Margin="10,0,0,0" Width="100" />
+                        <Popup IsOpen="{Binding IsPayPopupOpen, Mode=TwoWay}" PlacementTarget="{Binding RelativeSource={RelativeSource AncestorType=Window}}" Placement="MousePoint" StaysOpen="False">
+                            <Border Background="{StaticResource ControlBackground}" BorderBrush="{StaticResource Lavender}" BorderThickness="1" Padding="10" CornerRadius="6">
+                                <StackPanel>
+                                    <Button Content="Credit" Command="{Binding PayCreditCommand}" Width="120" Margin="0,6,0,6" />
+                                    <Button Content="Debit" Command="{Binding PayDebitCommand}" Width="120" Margin="0,6,0,6" />
+                                    <Button Content="Cash" Command="{Binding PayCashCommand}" Width="120" Margin="0,6,0,6" />
+                                </StackPanel>
+                            </Border>
+                        </Popup>
+
+                        <!-- Cancel button clears cart and closes popup -->
+                        <Button Content="Cancel" Margin="10,0,0,0" Width="100" Command="{Binding CancelCommand}" />
+                    </StackPanel>
+
+                    <!-- unobtrusive status bar, adjusted to midnight theme -->
+                    <Border Background="{StaticResource ControlBackground}" BorderBrush="#2B2B30" BorderThickness="1" Padding="8" Margin="0,8,0,0">
+                        <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="{StaticResource MutedText}" />
+                    </Border>
                 </StackPanel>
             </DockPanel>
         </GroupBox>

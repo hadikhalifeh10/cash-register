@@ -1,4 +1,5 @@
 ﻿# cash-register
+ This applicaiton is created with C# and allows for adding items and creating transactions.
 ```mermaid
 flowchart TD
   A[User clicks Add button AddItem1] --> B[View MainWindow invokes Command]
@@ -42,3 +43,4 @@ flowchart TD
   View-->>User: UI updates ListView and Total display
 ```
 Something
+

@@ -3,206 +3,298 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:cashregister"
         xmlns:vm="clr-namespace:cashregister.ViewModel"
         mc:Ignorable="d"
-        Title="Cash Register" Height="600" Width="1100"
+        Title="Cash Register" Height="900" Width="1400"
         Background="#0B0B0D" Foreground="#F3F3F3">
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
 
-    <!-- Midnight color style resources: dark backgrounds, light foregrounds, lavender accents -->
     <Window.Resources>
-        <SolidColorBrush x:Key="MidBackground" Color="#0B0B0D" />
-        <SolidColorBrush x:Key="PanelBackground" Color="#17171A" />
-        <SolidColorBrush x:Key="ControlBackground" Color="#1F1F23" />
-        <SolidColorBrush x:Key="ControlHover" Color="#2B2B30" />
-        <SolidColorBrush x:Key="Lavender" Color="#C39BD3" />
-        <SolidColorBrush x:Key="MutedText" Color="#DDE0E6" />
+        <!-- iOS dark mode palette: neutral dark surfaces with subtle separators -->
+        <SolidColorBrush x:Key="Surface" Color="#0C0C0F"/>
+        <SolidColorBrush x:Key="SecondarySurface" Color="#141418"/>
+        <SolidColorBrush x:Key="TertiarySurface" Color="#1C1C20"/>
+        <SolidColorBrush x:Key="Separator" Color="#2A2A2E"/>
+        <SolidColorBrush x:Key="LabelPrimary" Color="#F2F2F7"/>
+        <SolidColorBrush x:Key="LabelSecondary" Color="#C7C7CC"/>
+        <SolidColorBrush x:Key="AccentBlue" Color="#0A84FF"/>
+        <SolidColorBrush x:Key="AccentGreen" Color="#32D74B"/>
+        <SolidColorBrush x:Key="AccentRed" Color="#FF453A"/>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 
-        <!-- Shared base style for button-like controls to avoid TargetType mismatch when basing ToggleButton on Button -->
-        <Style x:Key="BaseButtonStyle" TargetType="ButtonBase">
-            <Setter Property="Background" Value="{StaticResource ControlBackground}" />
-            <Setter Property="Foreground" Value="{StaticResource MutedText}" />
-            <Setter Property="BorderBrush" Value="{StaticResource Lavender}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="6,4" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
+        <!-- Base control styles for dark mode -->
+        <Style x:Key="DarkTextBox" TargetType="TextBox">
+            <Setter Property="Background" Value="{StaticResource SecondarySurface}"/>
+            <Setter Property="Foreground" Value="{StaticResource LabelPrimary}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Separator}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="6,4"/>
+        </Style>
+        <Style x:Key="DarkButtonBase" TargetType="ButtonBase">
+            <Setter Property="Background" Value="{StaticResource TertiarySurface}"/>
+            <Setter Property="Foreground" Value="{StaticResource LabelPrimary}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Separator}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,6"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ButtonBase">
-                        <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
+                        <Border x:Name="Bd" CornerRadius="10" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource ControlHover}" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#232326" />
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource SecondarySurface}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.5" />
+                                <Setter Property="Opacity" Value="0.6" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style TargetType="Button" BasedOn="{StaticResource DarkButtonBase}" />
+        <Style TargetType="ToggleButton" BasedOn="{StaticResource DarkButtonBase}" />
 
-        <!-- Implicit Button style based on the shared base -->
-        <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}" />
-
-        <!-- ToggleButton uses the same visuals but must be based on ButtonBase (not Button) to avoid TargetType incompatibility -->
-        <Style TargetType="ToggleButton" BasedOn="{StaticResource BaseButtonStyle}" />
-
-        <!-- TextBox style for midnight theme -->
-        <Style TargetType="TextBox">
-            <Setter Property="Background" Value="{StaticResource ControlBackground}" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderBrush" Value="#FF4B4B4B" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="4" />
-            <Setter Property="CaretBrush" Value="White" />
+        <!-- TabControl dark style -->
+        <Style TargetType="TabControl">
+            <Setter Property="Background" Value="{StaticResource Surface}"/>
+            <Setter Property="Foreground" Value="{StaticResource LabelPrimary}"/>
+        </Style>
+        <Style TargetType="TabItem">
+            <Setter Property="Foreground" Value="{StaticResource LabelPrimary}"/>
+            <Setter Property="Background" Value="{StaticResource Surface}"/>
         </Style>
 
-        <!-- GroupBox panel styling -->
-        <Style TargetType="GroupBox">
-            <Setter Property="Background" Value="{StaticResource PanelBackground}" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderBrush" Value="#FF4B4B4B" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="6" />
-        </Style>
-
-        <!-- ListView styling -->
+        <!-- ListView/GridView dark style -->
         <Style TargetType="ListView">
-            <Setter Property="Background" Value="{StaticResource PanelBackground}" />
-            <Setter Property="Foreground" Value="{StaticResource MutedText}" />
-            <Setter Property="BorderBrush" Value="#2B2B30" />
-            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Background" Value="{StaticResource SecondarySurface}"/>
+            <Setter Property="Foreground" Value="{StaticResource LabelPrimary}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Separator}"/>
+            <Setter Property="BorderThickness" Value="1"/>
         </Style>
-
-        <!-- TextBlock default on theme -->
-        <Style TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource MutedText}" />
+        <Style TargetType="GridViewColumnHeader">
+            <Setter Property="Foreground" Value="{StaticResource LabelSecondary}"/>
+            <Setter Property="Background" Value="{StaticResource Surface}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Separator}"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="Padding" Value="8,4"/>
         </Style>
     </Window.Resources>
 
-    <Grid Margin="10">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="2*" />
-            <ColumnDefinition Width="3*" />
-        </Grid.ColumnDefinitions>
-
-        <GroupBox Header="Items" Grid.Column="0" Margin="5" Padding="8">
-            <StackPanel>
-                <!-- Dynamically generate buttons from the ViewModel Buttons collection -->
-                <ItemsControl ItemsSource="{Binding Buttons}" MaxHeight="420" Margin="0,0,0,8" Padding="0,0,0,12">
-                    <ItemsControl.ItemContainerStyle>
-                        <Style TargetType="ContentPresenter">
-                            <Setter Property="Margin" Value="0,8,0,8" />
-                        </Style>
-                    </ItemsControl.ItemContainerStyle>
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <!-- Increased vertical spacing so groupbox bottom border remains visible -->
-                            <WrapPanel Orientation="Vertical" ItemWidth="220" ItemHeight="52" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <!-- Larger vertical margins for clearer separation and visible groupbox border -->
-                            <Button Content="{Binding Label}" Command="{Binding Command}" Height="44" Width="200" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
-                <!-- Add new item UI -->
-                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                    <TextBox Width="120" Text="{Binding NewItemName, UpdateSourceTrigger=PropertyChanged}" />
-                    <TextBox Width="80" Margin="8,0,0,0" Text="{Binding NewItemPriceText, UpdateSourceTrigger=PropertyChanged}" />
-                    <Button Content="Add Item" Margin="8,0,0,0" Command="{Binding AddNewItemCommand}" />
+    <DockPanel>
+        <!-- Header -->
+        <Border DockPanel.Dock="Top" Background="{StaticResource Surface}" Padding="14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Cash Register" FontSize="22" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBox Height="34" Width="420" Style="{StaticResource DarkTextBox}"/>
+                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="" Foreground="{StaticResource LabelSecondary}" FontSize="20" Margin="10,0,0,0" VerticalAlignment="Center"/>
                 </StackPanel>
-            </StackPanel>
-        </GroupBox>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <ToggleButton x:Name="OrdersToggle" Content="Orders" Margin="4,0" Width="110" />
+                    <Popup IsOpen="{Binding ElementName=OrdersToggle, Path=IsChecked}" PlacementTarget="{Binding ElementName=OrdersToggle}" Placement="Bottom" StaysOpen="False">
+                        <Border Background="{StaticResource SecondarySurface}" BorderBrush="{StaticResource Separator}" BorderThickness="1" Padding="10" CornerRadius="10">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBox Width="180" Height="32" Style="{StaticResource DarkTextBox}" Text="{Binding LoadReceiptNumber, UpdateSourceTrigger=PropertyChanged}" ToolTip="Enter receipt number" GotFocus="TextBox_GotFocus_SetNumeric" />
+                                <Button Content="Load" Margin="10,0,0,0" Command="{Binding LoadReceiptCommand}" />
+                            </StackPanel>
+                        </Border>
+                    </Popup>
+                    <Button Content="Help" Margin="10,0,0,0" Width="90"/>
+                </StackPanel>
+            </Grid>
+        </Border>
 
-        <GroupBox Header="Cart" Grid.Column="1" Margin="5" Padding="8">
-            <DockPanel>
-                <ListView ItemsSource="{Binding Cart}" Name="CartList" DockPanel.Dock="Top">
-                    <ListView.Resources>
-                        <Style TargetType="GridViewColumnHeader">
-                            <Setter Property="Background" Value="{StaticResource PanelBackground}" />
-                            <Setter Property="Foreground" Value="{StaticResource MutedText}" />
-                            <Setter Property="BorderBrush" Value="{StaticResource Lavender}" />
-                            <Setter Property="BorderThickness" Value="0,0,0,1" />
-                            <Setter Property="Padding" Value="6" />
-                            <Setter Property="HorizontalContentAlignment" Value="Left" />
-                        </Style>
-                    </ListView.Resources>
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="150" />
-                            <GridViewColumn Header="Price" DisplayMemberBinding="{Binding Price, StringFormat=C}" Width="80" />
-                            <GridViewColumn Header="Qty" DisplayMemberBinding="{Binding Quantity}" Width="50" />
-                            <GridViewColumn Header="Subtotal" DisplayMemberBinding="{Binding Subtotal, StringFormat=C}" Width="80" />
-                            <GridViewColumn Header="Actions">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Button Content="-" Width="24" Height="24" Margin="4"
-                                                    Command="{Binding DataContext.RemoveFromCartCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding}"/>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                        </GridView>
-                    </ListView.View>
-                </ListView>
+        <!-- Main content -->
+        <Grid Margin="12" DockPanel.Dock="Top">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="3*" />
+            </Grid.ColumnDefinitions>
 
-                <StackPanel Orientation="Vertical" HorizontalAlignment="Right" Margin="0,10,0,0" DockPanel.Dock="Bottom">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <TextBlock Text="Subtotal: " VerticalAlignment="Center" Margin="0,0,5,0" />
-                        <TextBlock Text="{Binding Subtotal, StringFormat=C}" VerticalAlignment="Center" Width="100" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <TextBlock Text="GST (5%): " VerticalAlignment="Center" Margin="0,0,5,0" />
-                        <TextBlock Text="{Binding Gst, StringFormat=C}" VerticalAlignment="Center" Width="100" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <TextBlock Text="QST (9.975%): " VerticalAlignment="Center" Margin="0,0,5,0" />
-                        <TextBlock Text="{Binding Qst, StringFormat=C}" VerticalAlignment="Center" Width="100" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <TextBlock Text="Total: " FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,5,0" />
-                        <TextBlock Text="{Binding Total, StringFormat=C}" VerticalAlignment="Center" Width="100" />
+            <!-- Items Group -->
+            <GroupBox Header="Items" Grid.Column="0" Margin="8" Padding="10" Background="{StaticResource Surface}" Foreground="{StaticResource LabelPrimary}">
+                <DockPanel>
+                    <TabControl ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}">
+                        <TabControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" Foreground="{StaticResource LabelPrimary}" />
+                            </DataTemplate>
+                        </TabControl.ItemTemplate>
+                        <TabControl.ContentTemplate>
+                            <DataTemplate>
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding DataContext.Buttons, RelativeSource={RelativeSource AncestorType=TabControl}}" Margin="0,0,0,8" Padding="0,0,0,8" Background="{StaticResource Surface}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Vertical" ItemWidth="150" ItemHeight="34" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Content="{Binding Label}" Command="{Binding Command}" Height="30" Width="140" Margin="4" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </DataTemplate>
+                        </TabControl.ContentTemplate>
+                    </TabControl>
 
-                        <!-- Pay button replaced by ToggleButton + Popup -->
-                        <ToggleButton IsChecked="{Binding IsPayPopupOpen, Mode=TwoWay}" Content="Pay" Margin="10,0,0,0" Width="100" />
-                        <Popup IsOpen="{Binding IsPayPopupOpen, Mode=TwoWay}" PlacementTarget="{Binding RelativeSource={RelativeSource AncestorType=Window}}" Placement="MousePoint" StaysOpen="False">
-                            <Border Background="{StaticResource ControlBackground}" BorderBrush="{StaticResource Lavender}" BorderThickness="1" Padding="10" CornerRadius="6">
+                    <!-- Add new item row: textboxes on one row, Add button underneath -->
+                    <StackPanel Orientation="Vertical" Margin="0,10,0,0" DockPanel.Dock="Bottom">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBox Name="NewItemNameBox" Tag="NewItemName" Width="160" Height="28" Text="{Binding NewItemName, UpdateSourceTrigger=PropertyChanged}" GotFocus="TextBox_GotFocus_SetAlpha" />
+                            <TextBox Name="NewItemPriceBox" Tag="NewItemPriceText" Width="100" Height="28" Margin="6,0,0,0" Text="{Binding NewItemPriceText, UpdateSourceTrigger=PropertyChanged}" GotFocus="TextBox_GotFocus_SetNumeric" />
+                            <TextBox Name="NewItemCategoryBox" Tag="NewItemCategory" Width="120" Height="28" Margin="6,0,0,0" Text="{Binding NewItemCategory, UpdateSourceTrigger=PropertyChanged}" GotFocus="TextBox_GotFocus_SetAlpha" />
+                        </StackPanel>
+                        <Button Content="Add Item" Width="120" Height="30" Margin="0,6,0,0" HorizontalAlignment="Left" Command="{Binding AddNewItemCommand}" />
+                    </StackPanel>
+                </DockPanel>
+            </GroupBox>
+
+            <!-- Cart Group -->
+            <GroupBox Header="Cart" Grid.Column="1" Margin="8" Padding="10" Background="{StaticResource Surface}" Foreground="{StaticResource LabelPrimary}">
+                <DockPanel>
+                    <ListView ItemsSource="{Binding Cart}" Name="CartList" DockPanel.Dock="Top">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="180" />
+                                <GridViewColumn Header="Price" DisplayMemberBinding="{Binding Price, StringFormat=C}" Width="100" />
+                                <GridViewColumn Header="Qty" DisplayMemberBinding="{Binding Quantity}" Width="80" />
+                                <GridViewColumn Header="Subtotal" DisplayMemberBinding="{Binding Subtotal, StringFormat=C}" Width="120" />
+                                <GridViewColumn Header="Actions">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="-" Width="24" Height="24" Margin="4"
+                                                        Command="{Binding DataContext.RemoveFromCartCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}"/>
+                                                <Button Content="%" Width="24" Height="24" Margin="4"
+                                                        ToolTip="Apply item discount"
+                                                        Command="{Binding DataContext.ApplyItemDiscountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Right" Margin="0,10,0,0" DockPanel.Dock="Bottom">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <TextBox Name="DiscountBox" Tag="DiscountText" Width="120" Height="28" Style="{StaticResource DarkTextBox}" Text="{Binding DiscountText, UpdateSourceTrigger=PropertyChanged}" ToolTip="Enter discount (e.g., 10 or 10%)" GotFocus="TextBox_GotFocus_SetNumeric" />
+                            <Button Content="Discount Total" Margin="8,0,0,0" Command="{Binding ApplyTotalDiscountCommand}" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <TextBlock Text="Subtotal:" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{StaticResource LabelSecondary}" />
+                            <TextBlock Text="{Binding Subtotal, StringFormat=C}" VerticalAlignment="Center" Width="120" Foreground="{StaticResource LabelPrimary}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <TextBlock Text="GST (5%):" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{StaticResource LabelSecondary}" />
+                            <TextBlock Text="{Binding Gst, StringFormat=C}" VerticalAlignment="Center" Width="120" Foreground="{StaticResource LabelPrimary}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <TextBlock Text="QST (9.975%):" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{StaticResource LabelSecondary}" />
+                            <TextBlock Text="{Binding Qst, StringFormat=C}" VerticalAlignment="Center" Width="120" Foreground="{StaticResource LabelPrimary}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <TextBlock Text="Total:" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{StaticResource LabelSecondary}" />
+                            <TextBlock Text="{Binding Total, StringFormat=C}" VerticalAlignment="Center" Width="120" Foreground="{StaticResource LabelPrimary}" />
+                            <ToggleButton x:Name="PayToggle" IsChecked="{Binding IsPayPopupOpen, Mode=TwoWay}" Content="Pay" Margin="10,0,0,0" Width="110" />
+                            <Popup IsOpen="{Binding IsPayPopupOpen, Mode=TwoWay}" PlacementTarget="{Binding ElementName=PayToggle}" Placement="Bottom" StaysOpen="False">
+                                <Border Padding="10" CornerRadius="10">
+                                    <StackPanel>
+                                        <Button Content="Credit" Command="{Binding PayCreditCommand}" Width="130" Margin="0,6,0,6" />
+                                        <Button Content="Debit" Command="{Binding PayDebitCommand}" Width="130" Margin="0,6,0,6" />
+                                        <Button Content="Cash" Command="{Binding ShowCashTenderCommand}" Width="130" Margin="0,6,0,6" />
+                                    </StackPanel>
+                                </Border>
+                            </Popup>
+                            <Button Content="Cancel" Margin="10,0,0,0" Width="110" Command="{Binding CancelCommand}" />
+                        </StackPanel>
+
+                        <Popup IsOpen="{Binding IsCashTenderVisible}" Placement="Bottom" StaysOpen="False">
+                            <Border Background="{StaticResource SecondarySurface}" BorderBrush="{StaticResource Separator}" BorderThickness="1" Padding="12" CornerRadius="10">
                                 <StackPanel>
-                                    <Button Content="Credit" Command="{Binding PayCreditCommand}" Width="120" Margin="0,6,0,6" />
-                                    <Button Content="Debit" Command="{Binding PayDebitCommand}" Width="120" Margin="0,6,0,6" />
-                                    <Button Content="Cash" Command="{Binding PayCashCommand}" Width="120" Margin="0,6,0,6" />
+                                    <TextBlock Text="Cash received:" Margin="0,0,0,6" Foreground="{StaticResource LabelSecondary}" />
+                                    <TextBox Name="CashTenderBox" Tag="CashTenderText" Width="180" Height="28" Style="{StaticResource DarkTextBox}" Text="{Binding CashTenderText, UpdateSourceTrigger=PropertyChanged}" GotFocus="TextBox_GotFocus_SetNumeric" />
+                                    <TextBlock Text="{Binding CashDue, StringFormat=Due: {0:C}}" Margin="0,6,0,0" Foreground="{StaticResource LabelPrimary}"/>
+                                    <TextBlock Text="{Binding CashChange, StringFormat=Change: {0:C}}" Foreground="{StaticResource LabelPrimary}"/>
+                                    <Button Content="Confirm" Command="{Binding ConfirmCashPaymentCommand}" Width="130" Margin="0,8,0,0"/>
                                 </StackPanel>
                             </Border>
                         </Popup>
 
-                        <!-- Cancel button clears cart and closes popup -->
-                        <Button Content="Cancel" Margin="10,0,0,0" Width="100" Command="{Binding CancelCommand}" />
+                        <Border Background="{StaticResource SecondarySurface}" BorderBrush="{StaticResource Separator}" BorderThickness="1" Padding="8" Margin="0,8,0,0" CornerRadius="8">
+                            <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="{StaticResource LabelSecondary}" />
+                        </Border>
                     </StackPanel>
+                </DockPanel>
+            </GroupBox>
+        </Grid>
 
-                    <!-- unobtrusive status bar, adjusted to midnight theme -->
-                    <Border Background="{StaticResource ControlBackground}" BorderBrush="#2B2B30" BorderThickness="1" Padding="8" Margin="0,8,0,0">
-                        <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="{StaticResource MutedText}" />
-                    </Border>
-                </StackPanel>
-            </DockPanel>
-        </GroupBox>
-    </Grid>
+        <!-- On-screen keyboard docked bottom -->
+        <Border DockPanel.Dock="Bottom" Background="{StaticResource Surface}" BorderBrush="{StaticResource Separator}" BorderThickness="1" Padding="16" CornerRadius="12">
+            <StackPanel>
+                <UniformGrid Rows="3" Columns="9" Visibility="{Binding IsAlphaKeyboardVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Button Content="A" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="A"/>
+                    <Button Content="B" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="B"/>
+                    <Button Content="C" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="C"/>
+                    <Button Content="D" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="D"/>
+                    <Button Content="E" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="E"/>
+                    <Button Content="F" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="F"/>
+                    <Button Content="G" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="G"/>
+                    <Button Content="H" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="H"/>
+                    <Button Content="I" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="I"/>
+                    <Button Content="J" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="J"/>
+                    <Button Content="K" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="K"/>
+                    <Button Content="L" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="L"/>
+                    <Button Content="M" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="M"/>
+                    <Button Content="N" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="N"/>
+                    <Button Content="O" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="O"/>
+                    <Button Content="P" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="P"/>
+                    <Button Content="Q" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="Q"/>
+                    <Button Content="R" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="R"/>
+                    <Button Content="S" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="S"/>
+                    <Button Content="T" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="T"/>
+                    <Button Content="U" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="U"/>
+                    <Button Content="V" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="V"/>
+                    <Button Content="W" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="W"/>
+                    <Button Content="X" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="X"/>
+                    <Button Content="Y" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="Y"/>
+                    <Button Content="Z" Width="52" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="Z"/>
+                    <Button Content="Space" Width="120" Height="52" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter=" "/>
+                    <Button Content="Bksp" Width="90" Height="52" Margin="6" Command="{Binding KeyboardBackspaceCommand}"/>
+                    <Button Content="Clear" Width="90" Height="52" Margin="6" Command="{Binding KeyboardClearCommand}"/>
+                </UniformGrid>
+                <UniformGrid Rows="4" Columns="4" Visibility="{Binding IsNumericKeyboardVisible, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,10,0,0">
+                    <Button Content="1" Width="56" Height="56" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="1"/>
+                    <Button Content="2" Width="56" Height="56" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="2"/>
+                    <Button Content="3" Width="56" Height="56" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="3"/>
+                    <Button Content="4" Width="56" Height="56" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="4"/>
+                    <Button Content="5" Width="56" Height="56" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="5"/>
+                    <Button Content="6" Width="56" Height="56" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="6"/>
+                    <Button Content="7" Width="56" Height="56" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="7"/>
+                    <Button Content="8" Width="56" Height="56" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="8"/>
+                    <Button Content="9" Width="56" Height="56" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="9"/>
+                    <Button Content="0" Width="56" Height="56" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="0"/>
+                    <Button Content="." Width="56" Height="56" Margin="6" Command="{Binding InsertKeyboardCharCommand}" CommandParameter="."/>
+                    <Button Content="Bksp" Width="90" Height="56" Margin="6" Command="{Binding KeyboardBackspaceCommand}"/>
+                    <Button Content="Clear" Width="90" Height="56" Margin="6" Command="{Binding KeyboardClearCommand}"/>
+                </UniformGrid>
+            </StackPanel>
+        </Border>
+    </DockPanel>
 </Window>

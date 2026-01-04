@@ -1,283 +1,224 @@
-using cashregister.Model; // reference the Item and CartItem model types
-using System; // basic types
-using System.Collections.ObjectModel; // use ObservableCollection for collections bound to the UI
-using System.ComponentModel; // INotifyPropertyChanged interface and event args
-using System.Linq; // LINQ methods such as FirstOrDefault and Sum
-using System.Collections.Specialized; // NotifyCollectionChangedEventArgs
+using cashregister.Model;
+using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Linq;
+using System.Collections.Specialized;
+using System.IO;
+using System.Text;
 
-namespace cashregister.ViewModel // namespace for view models
-{ // start namespace
-    public class MainViewModel : INotifyPropertyChanged // view model that notifies view about property changes
-    { // start class
-        public ObservableCollection<Item> Items { get; } = new(); // collection of available items in the store
-        public ObservableCollection<CartItem> Cart { get; } = new(); // collection representing the shopping cart
+namespace cashregister.ViewModel
+{
+    public partial class MainViewModel : INotifyPropertyChanged
+    {
+        public ObservableCollection<Item> Items { get; } = new();
+        public ObservableCollection<CartItem> Cart { get; } = new();
 
-        public ObservableCollection<CommandButton> Buttons { get; } = new(); // dynamic collection of buttons exposed to the view
+        public ObservableCollection<CommandButton> Buttons { get; } = new();
+        public ObservableCollection<string> Categories { get; } = new();
 
-        public RelayCommand AddToCartCommand { get; } // command to add a selected Item to the cart
-        public RelayCommand RemoveFromCartCommand { get; } // command to remove or decrement a CartItem from the cart
-        public RelayCommand CheckoutCommand { get; } // command to perform checkout (clear the cart)
-        public RelayCommand CancelCommand { get; } // command to cancel and reset the register
-
-        public RelayCommand PayCreditCommand { get; } // pay via credit
-        public RelayCommand PayDebitCommand { get; } // pay via debit
-        public RelayCommand PayCashCommand { get; } // pay via cash
-
-        public RelayCommand AddNewItemCommand { get; } // command to add a new item to Items from UI
-
-        private bool _isPayPopupOpen; // backing field for whether the pay popup is open
-        public bool IsPayPopupOpen // whether the pay options popup is open
+        private string _selectedCategory = "base";
+        public string SelectedCategory
         {
-            get => _isPayPopupOpen; // return current state
+            get => _selectedCategory;
             set
             {
-                if (_isPayPopupOpen == value) return; // no change
-                _isPayPopupOpen = value; // update
-                OnPropertyChanged(nameof(IsPayPopupOpen)); // notify UI
+                if (_selectedCategory == value) return;
+                _selectedCategory = value;
+                OnPropertyChanged(nameof(SelectedCategory));
+                RebuildButtonsForSelectedCategory();
             }
         }
 
-        private string _newItemName = string.Empty; // backing for new item name text box
-        public string NewItemName // bound to UI textbox for new item name
+        public RelayCommand AddToCartCommand { get; }
+        public RelayCommand RemoveFromCartCommand { get; }
+        public RelayCommand CheckoutCommand { get; }
+        public RelayCommand CancelCommand { get; }
+
+        public RelayCommand PayCreditCommand { get; }
+        public RelayCommand PayDebitCommand { get; }
+        public RelayCommand PayCashCommand { get; }
+
+        public RelayCommand AddNewItemCommand { get; }
+        public RelayCommand ApplyItemDiscountCommand { get; }
+        public RelayCommand ApplyTotalDiscountCommand { get; }
+        public RelayCommand LoadReceiptCommand { get; }
+
+        private bool _isPayPopupOpen;
+        public bool IsPayPopupOpen
+        {
+            get => _isPayPopupOpen;
+            set
+            {
+                if (_isPayPopupOpen == value) return;
+                _isPayPopupOpen = value;
+                OnPropertyChanged(nameof(IsPayPopupOpen));
+            }
+        }
+
+        private string _newItemName = string.Empty;
+        public string NewItemName
         {
             get => _newItemName;
-            set
-            {
-                if (_newItemName == value) return;
-                _newItemName = value;
-                OnPropertyChanged(nameof(NewItemName));
-            }
+            set { if (_newItemName == value) return; _newItemName = value; OnPropertyChanged(nameof(NewItemName)); }
         }
 
-        private string _newItemPriceText = string.Empty; // backing for new item price input
-        public string NewItemPriceText // bound to UI textbox for new item price
+        private string _newItemPriceText = string.Empty;
+        public string NewItemPriceText
         {
             get => _newItemPriceText;
-            set
-            {
-                if (_newItemPriceText == value) return;
-                _newItemPriceText = value;
-                OnPropertyChanged(nameof(NewItemPriceText));
-            }
+            set { if (_newItemPriceText == value) return; _newItemPriceText = value; OnPropertyChanged(nameof(NewItemPriceText)); }
         }
 
-        private string _statusMessage = string.Empty; // small unobtrusive status message shown in UI
-        public string StatusMessage // bound to the status bar TextBlock
+        private string _newItemCategory = string.Empty;
+        public string NewItemCategory
+        {
+            get => _newItemCategory;
+            set { if (_newItemCategory == value) return; _newItemCategory = value; OnPropertyChanged(nameof(NewItemCategory)); }
+        }
+
+        private string _discountText = string.Empty;
+        public string DiscountText
+        {
+            get => _discountText;
+            set { if (_discountText == value) return; _discountText = value; OnPropertyChanged(nameof(DiscountText)); }
+        }
+
+        private string _loadReceiptNumber = string.Empty;
+        public string LoadReceiptNumber
+        {
+            get => _loadReceiptNumber;
+            set { if (_loadReceiptNumber == value) return; _loadReceiptNumber = value; OnPropertyChanged(nameof(LoadReceiptNumber)); }
+        }
+
+        private decimal _totalDiscountPercent;
+        public decimal TotalDiscountPercent
+        {
+            get => _totalDiscountPercent;
+            set { var normalized = value < 0 ? 0 : (value > 1 ? 1 : value); if (_totalDiscountPercent == normalized) return; _totalDiscountPercent = normalized; OnPropertyChanged(nameof(TotalDiscountPercent)); RaiseTotalsChanged(); }
+        }
+
+        private string _statusMessage = string.Empty;
+        public string StatusMessage
         {
             get => _statusMessage;
+            set { if (_statusMessage == value) return; _statusMessage = value; OnPropertyChanged(nameof(StatusMessage)); }
+        }
+
+        private readonly ReceiptService _receiptService = new();
+
+        public MainViewModel()
+        {
+            Items.Add(new Item { Name = "Apple", Price = 0.99m, Category = "base" });
+            Items.Add(new Item { Name = "Banana", Price = 0.59m, Category = "base" });
+            Items.Add(new Item { Name = "Chocolate", Price = 2.49m, Category = "base" });
+            Items.Add(new Item { Name = "Bread", Price = 1.99m, Category = "base" });
+            Items.Add(new Item { Name = "Milk", Price = 1.49m, Category = "base" });
+            Items.Add(new Item { Name = "Eggs", Price = 2.99m, Category = "base" });
+
+            Categories.Add("base");
+            SelectedCategory = "base";
+
+            AddToCartCommand = new RelayCommand(p => AddToCart(p as Item));
+            RemoveFromCartCommand = new RelayCommand(p => RemoveFromCart(p as CartItem), p => p is CartItem);
+            CheckoutCommand = new RelayCommand(_ => Checkout(), _ => Cart.Any());
+            CancelCommand = new RelayCommand(_ => Cancel(), _ => true);
+
+            PayCreditCommand = new RelayCommand(_ => PayAndCloseWithReceipt("Credit"));
+            PayDebitCommand = new RelayCommand(_ => PayAndCloseWithReceipt("Debit"));
+            PayCashCommand = new RelayCommand(_ => PayAndCloseWithReceipt("Cash"));
+
+            AddNewItemCommand = new RelayCommand(_ => AddNewItem());
+            ApplyItemDiscountCommand = new RelayCommand(p => ApplyItemDiscount(p as CartItem));
+            ApplyTotalDiscountCommand = new RelayCommand(_ => ApplyTotalDiscount());
+            LoadReceiptCommand = new RelayCommand(_ => LoadReceipt());
+
+            RebuildButtonsForSelectedCategory();
+            Items.CollectionChanged += Items_CollectionChanged;
+            Cart.CollectionChanged += Cart_CollectionChanged;
+
+            EnsureReceiptsFolder();
+            InitializeCashTendering();
+            InitializeKeyboard();
+        }
+
+        private void EnsureReceiptsFolder() => _receiptService.EnsureReceiptsFolder();
+        private int GetNextReceiptNumber() => _receiptService.GetNextReceiptNumber();
+        private void SaveReceipt(int number, string paymentMethod) => _receiptService.SaveReceipt(number, paymentMethod, Cart, Subtotal, Gst, Qst, TotalDiscountPercent, Total);
+
+        private bool TryLoadReceipt(int number)
+        {
+            var ok = _receiptService.TryLoadReceipt(number, Cart, out var totalDiscount);
+            if (ok) TotalDiscountPercent = totalDiscount;
+            return ok;
+        }
+
+        private void LoadReceipt()
+        {
+            if (!int.TryParse(LoadReceiptNumber, out var number) || number <= 0)
+            { StatusMessage = "Enter a valid receipt number"; return; }
+            if (!TryLoadReceipt(number)) { StatusMessage = $"Receipt {number} not found"; }
+        }
+
+        // Cash tendering properties/commands
+        private bool _isCashTenderVisible;
+        public bool IsCashTenderVisible
+        {
+            get => _isCashTenderVisible;
+            set { if (_isCashTenderVisible == value) return; _isCashTenderVisible = value; OnPropertyChanged(nameof(IsCashTenderVisible)); }
+        }
+
+        private string _cashTenderText = string.Empty;
+        public string CashTenderText
+        {
+            get => _cashTenderText;
             set
             {
-                if (_statusMessage == value) return;
-                _statusMessage = value;
-                OnPropertyChanged(nameof(StatusMessage));
+                if (_cashTenderText == value) return;
+                _cashTenderText = value;
+                OnPropertyChanged(nameof(CashTenderText));
+                UpdateCashTenderCalculations();
             }
         }
 
-        public MainViewModel() // constructor initializes collections and commands
-        { // start ctor
-            // sample items - ensure five items exist
-            Items.Add(new Item { Name = "Apple", Price = 0.99m }); // add Apple item to Items collection
-            Items.Add(new Item { Name = "Banana", Price = 0.59m }); // add Banana item to Items collection
-            Items.Add(new Item { Name = "Chocolate", Price = 2.49m }); // add Chocolate item to Items collection
-            Items.Add(new Item { Name = "Bread", Price = 1.99m }); // add Bread item to Items collection
-            Items.Add(new Item { Name = "Milk", Price = 1.49m }); // add Milk item to Items collection
-            Items.Add(new Item { Name = "Eggs", Price = 2.99m }); // add Eggs item to Items collection
-
-            AddToCartCommand = new RelayCommand(p => AddToCart(p as Item)); // create command that calls AddToCart with parameter cast to Item
-            RemoveFromCartCommand = new RelayCommand(p => RemoveFromCart(p as CartItem), p => p is CartItem); // create command to remove cart item with canExecute checking parameter is CartItem
-            CheckoutCommand = new RelayCommand(_ => Checkout(), _ => Cart.Any()); // create checkout command that only can execute when cart has items
-            CancelCommand = new RelayCommand(_ => Cancel(), _ => true); // cancel always enabled
-
-            // pay commands clear the cart and close the popup
-            PayCreditCommand = new RelayCommand(_ => PayAndClose());
-            PayDebitCommand = new RelayCommand(_ => PayAndClose());
-            PayCashCommand = new RelayCommand(_ => PayAndClose());
-
-            AddNewItemCommand = new RelayCommand(_ => AddNewItem()); // add new item from UI
-
-            // Build Buttons dynamically from Items collection so any button added in the viewmodel shows up in the view
-            foreach (var item in Items)
-            {
-                Buttons.Add(CreateButtonForItem(item));
-            }
-
-            // subscribe to changes in Items so newly added items also get buttons
-            Items.CollectionChanged += Items_CollectionChanged;
-
-            // subscribe to collection changes to track item additions/removals and update totals
-            Cart.CollectionChanged += Cart_CollectionChanged;
-        } // end ctor
-
-        private void Items_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        private decimal _cashTenderAmount;
+        public decimal CashTenderAmount
         {
-            if (e.NewItems != null)
-            {
-                foreach (var ni in e.NewItems.OfType<Item>())
-                {
-                    Buttons.Add(CreateButtonForItem(ni));
-                }
-            }
-
-            if (e.OldItems != null)
-            {
-                foreach (var oi in e.OldItems.OfType<Item>())
-                {
-                    var btn = Buttons.FirstOrDefault(b => b.Label.StartsWith($"Add {oi.Name} "));
-                    if (btn != null) Buttons.Remove(btn);
-                }
-            }
+            get => _cashTenderAmount;
+            private set { if (_cashTenderAmount == value) return; _cashTenderAmount = value; OnPropertyChanged(nameof(CashTenderAmount)); OnPropertyChanged(nameof(CashChange)); OnPropertyChanged(nameof(CashDue)); }
         }
 
-        private CommandButton CreateButtonForItem(Item item)
+        public decimal CashChange => CashTenderAmount > Total ? CashTenderAmount - Total : 0m;
+        public decimal CashDue => CashTenderAmount < Total ? Total - CashTenderAmount : 0m;
+
+        public RelayCommand ShowCashTenderCommand { get; private set; }
+        public RelayCommand ConfirmCashPaymentCommand { get; private set; }
+
+        private void UpdateCashTenderCalculations()
         {
-            // create CommandButton with label and command to add this item
-            return new CommandButton { Label = $"Add {item.Name} - {item.Price:C}", Command = new RelayCommand(_ => AddToCart(item)) };
+            if (!decimal.TryParse(CashTenderText, out var amount)) amount = 0m;
+            CashTenderAmount = amount;
         }
 
-        private void AddNewItem()
+        private void ConfirmCashPayment()
         {
-            // try parse price
-            if (string.IsNullOrWhiteSpace(NewItemName))
+            // If tender is enough, complete and save receipt; otherwise keep popup open
+            if (CashTenderAmount >= Total)
             {
-                StatusMessage = "Item name required";
-                return;
-            }
-
-            if (!decimal.TryParse(NewItemPriceText, out var price))
-            {
-                StatusMessage = "Invalid price";
-                return;
-            }
-
-            var newItem = new Item { Name = NewItemName.Trim(), Price = price };
-            Items.Add(newItem);
-            StatusMessage = $"{newItem.Name} added successfully"; // unobtrusive status
-
-            // clear inputs
-            NewItemName = string.Empty;
-            NewItemPriceText = string.Empty;
-        }
-
-        private void Cart_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-        {
-            // subscribe to PropertyChanged on new items so quantity changes update totals
-            if (e.NewItems != null)
-            {
-                foreach (var ni in e.NewItems.OfType<CartItem>())
-                {
-                    ni.PropertyChanged += CartItem_PropertyChanged;
-                }
-            }
-
-            // unsubscribe from old items
-            if (e.OldItems != null)
-            {
-                foreach (var oi in e.OldItems.OfType<CartItem>())
-                {
-                    oi.PropertyChanged -= CartItem_PropertyChanged;
-                }
-            }
-
-            RaiseTotalsChanged(); // whenever collection changes, update subtotal/gst/qst/total bindings and commands
-        }
-
-        private void CartItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-        {
-            // when a CartItem's Quantity or Subtotal changes, update totals
-            if (e.PropertyName == nameof(CartItem.Quantity) || e.PropertyName == nameof(CartItem.Subtotal))
-            {
-                RaiseTotalsChanged();
-            }
-        }
-
-        private void CommandManagerInvalidateRequerySuggested() => System.Windows.Input.CommandManager.InvalidateRequerySuggested(); // helper to force command requery
-
-        private void RaiseTotalsChanged()
-        {
-            OnPropertyChanged(nameof(Subtotal)); // notify subtotal changed
-            OnPropertyChanged(nameof(Gst)); // notify GST changed
-            OnPropertyChanged(nameof(Qst)); // notify QST changed
-            OnPropertyChanged(nameof(Total)); // notify final total changed
-            CommandManagerInvalidateRequerySuggested(); // re-evaluate command CanExecute states
-        }
-
-        private void AddToCartAtIndex(int index) // helper that retrieves an Item by index and forwards to AddToCart
-        { // start method
-            Item? item = null; // local variable to hold the resolved item
-            if (index >= 0 && index < Items.Count) item = Items[index]; // if index valid, get the item from Items
-            AddToCart(item); // add the resolved item to the cart (or no-op if null)
-        } // end method
-
-        private void AddToCart(Item? item) // core logic to add an item into the cart
-        { // start method
-            if (item == null) return; // do nothing when item is null
-            var existing = Cart.FirstOrDefault(c => c.Name == item.Name); // find existing cart entry with same name
-            if (existing != null)
-            {
-                existing.Quantity++; // increment quantity when item already in cart
-                // existing will raise property changed which we handle in CartItem_PropertyChanged
+                var number = GetNextReceiptNumber();
+                SaveReceipt(number, "Cash");
+                StatusMessage = $"Payment completed. Change: {CashChange:C}. Receipt #{number} saved";
+                Checkout();
+                IsCashTenderVisible = false;
+                IsPayPopupOpen = false;
             }
             else
             {
-                var cartItem = new CartItem { Name = item.Name, Price = item.Price, Quantity = 1 }; // create new cart item
-                Cart.Add(cartItem); // add to observable collection; CollectionChanged handler will subscribe to its PropertyChanged
+                StatusMessage = $"Cash due: {CashDue:C}";
             }
-
-            // set unobtrusive status message for UI
-            StatusMessage = $"{item.Name} added successfully";
-        } // end method
-
-        private void RemoveFromCart(CartItem? cartItem) // logic to decrement or remove a cart item
-        { // start method
-            if (cartItem == null) return; // no-op if parameter null
-            cartItem.Quantity--; // decrement the quantity
-            if (cartItem.Quantity <= 0)
-            {
-                // unsubscribe then remove
-                cartItem.PropertyChanged -= CartItem_PropertyChanged;
-                Cart.Remove(cartItem); // remove from collection when quantity reaches zero or below
-            }
-
-            // totals updated via PropertyChanged or CollectionChanged
-            StatusMessage = cartItem != null ? $"{cartItem.Name} removed" : StatusMessage;
-        } // end method
-
-        private void Checkout() // clear the cart and update observers
-        { // start method
-            // unsubscribe from all items to avoid memory leaks
-            foreach (var ci in Cart.ToList())
-            {
-                ci.PropertyChanged -= CartItem_PropertyChanged;
-            }
-
-            Cart.Clear(); // remove all items from cart
-            RaiseTotalsChanged(); // notify total changed after clearing
-            StatusMessage = "Payment completed"; // unobtrusive status
-        } // end method
-
-        private void Cancel() // cancel resets register and closes pay popup
-        {
-            Checkout(); // clear the cart
-            IsPayPopupOpen = false; // close popup if open
-            StatusMessage = "Transaction cancelled";
         }
 
-        private void PayAndClose() // handle a payment option selection
-        {
-            Checkout(); // clear the cart as payment completes
-            IsPayPopupOpen = false; // close popup
-        }
-
-        public decimal Subtotal => Cart.Sum(c => c.Subtotal); // computed property that sums subtotals of items in cart
-
-        public decimal Gst => Subtotal * 0.05m; // GST at 5% of subtotal
-
-        public decimal Qst => Subtotal * 0.09975m; // QST at 9.975% of subtotal
-
-        public decimal Total => Subtotal + Gst + Qst; // final total including taxes
-
-        public event PropertyChangedEventHandler? PropertyChanged; // event used by INotifyPropertyChanged to notify the view
-
-        private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name)); // helper to raise PropertyChanged
-    } // end class
-} // end namespace
+        public event PropertyChangedEventHandler? PropertyChanged;
+        private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    }
+}

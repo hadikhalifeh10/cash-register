@@ -5,6 +5,7 @@ namespace cashregister.Model // namespace for model types
     public class CartItem : INotifyPropertyChanged // model used to represent an entry in the shopping cart that notifies changes
     { // start class
         private int _quantity; // private backing field for Quantity property
+        private decimal _discountPercent; // 0..1 fraction discount applied per item
 
         public string Name { get; set; } // the display name of the cart item
         public decimal Price { get; set; } // the unit price of the cart item
@@ -21,7 +22,20 @@ namespace cashregister.Model // namespace for model types
             } // end set
         } // end property
 
-        public decimal Subtotal => Price * Quantity; // computed subtotal based on price and quantity
+        public decimal DiscountPercent // 0..1 fraction (e.g., 0.10 = 10%)
+        {
+            get => _discountPercent;
+            set
+            {
+                var normalized = value < 0 ? 0 : (value > 1 ? 1 : value);
+                if (_discountPercent == normalized) return;
+                _discountPercent = normalized;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DiscountPercent)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Subtotal)));
+            }
+        }
+
+        public decimal Subtotal => Price * Quantity * (1 - DiscountPercent); // computed subtotal with discount
 
         public event PropertyChangedEventHandler? PropertyChanged; // event implementation for INotifyPropertyChanged
     } // end class

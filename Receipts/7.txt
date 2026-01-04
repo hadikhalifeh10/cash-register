@@ -1,0 +1,11 @@
+Receipt: 7
+Date: 2026-01-03 19:30
+Payment: Credit
+Items:
+- Bread x1 @ $1.99 = $1.99
+- Chocolate x1 @ $2.49 = $2.49
+Subtotal: $4.48
+GST: $0.22
+QST: $0.45
+Total Discount: 100%
+Total: $0.00

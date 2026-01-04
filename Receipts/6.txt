@@ -1,0 +1,9 @@
+Receipt: 6
+Date: 2026-01-03 16:21
+Payment: Cash
+Items:
+- Chocolate x1 @ $2.49 = $2.49
+Subtotal: $2.49
+GST: $0.12
+QST: $0.25
+Total: $2.86

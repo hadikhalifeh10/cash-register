@@ -1,0 +1,11 @@
+Receipt: 1
+Date: 2026-01-02 17:50
+Payment: Credit
+Items:
+- Apple x1 @ $0.99 = $0.99
+- Banana x1 @ $0.59 = $0.59
+- Chocolate x1 @ $2.49 = $2.49
+Subtotal: $4.07
+GST: $0.20
+QST: $0.41
+Total: $4.68

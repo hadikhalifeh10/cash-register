@@ -1,9 +1,0 @@
-Receipt: 4
-Date: 2026-01-02 18:06
-Payment: Credit
-Items:
-- Banana x1 @ $0.59 = $0.59
-Subtotal: $0.59
-GST: $0.03
-QST: $0.06
-Total: $0.68

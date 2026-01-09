@@ -39,5 +39,10 @@ namespace cashregister.ViewModel
         }
 
         // initialize cash commands in ctor via a helper in a separate partial
+        private void InitializePaymentsUi()
+        {
+            // called from ctor
+            InitializeSplit();
+        }
     }
 }

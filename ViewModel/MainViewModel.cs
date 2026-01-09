@@ -140,6 +140,7 @@ namespace cashregister.ViewModel
             EnsureReceiptsFolder();
             InitializeCashTendering();
             InitializeKeyboard();
+            InitializeSplit();
         }
 
         private void EnsureReceiptsFolder() => _receiptService.EnsureReceiptsFolder();

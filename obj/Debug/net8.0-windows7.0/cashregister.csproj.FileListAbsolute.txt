@@ -46,3 +46,5 @@ C:\Users\hadik\source\repos\cashregister\cashregister\bin\Debug\net8.0-windows7.
 C:\Users\hadik\source\repos\cashregister\cashregister\bin\Debug\net8.0-windows7.0\runtimes\win-x86\native\e_sqlite3.dll
 C:\Users\hadik\source\repos\cashregister\cashregister\obj\Debug\net8.0-windows7.0\cashregister.csproj.AssemblyReference.cache
 C:\Users\hadik\source\repos\cashregister\cashregister\obj\Debug\net8.0-windows7.0\cashregi.4F183564.Up2Date
+C:\Users\hadik\source\repos\cashregister\cashregister\obj\Debug\net8.0-windows7.0\TransactionsWindow.g.cs
+C:\Users\hadik\source\repos\cashregister\cashregister\obj\Debug\net8.0-windows7.0\TransactionsWindow.baml

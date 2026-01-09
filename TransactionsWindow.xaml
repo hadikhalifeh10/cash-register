@@ -1,0 +1,157 @@
+<Window x:Class="cashregister.TransactionsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:cashregister.ViewModel"
+        Title="Transactions" Height="700" Width="720"
+        Background="#0B0B0D" Foreground="#FFFFFF">
+    <Window.DataContext>
+        <vm:TransactionsViewModel />
+    </Window.DataContext>
+
+    <Window.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="Background" Value="#1C1C20"/>
+            <Setter Property="BorderBrush" Value="#2A2A2E"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,6"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="Background" Value="#1C1C20"/>
+            <Setter Property="BorderBrush" Value="#2A2A2E"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Style.Triggers>
+                <Trigger Property="IsReadOnly" Value="True">
+                    <Setter Property="Background" Value="#1C1C20"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#1C1C20"/>
+                    <Setter Property="Foreground" Value="#A0A0A0"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="Background" Value="#1C1C20"/>
+            <Setter Property="BorderBrush" Value="#2A2A2E"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="Background" Value="#1C1C20"/>
+        </Style>
+        <Style TargetType="Expander">
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="Background" Value="#0B0B0D"/>
+        </Style>
+        <Style TargetType="ScrollViewer">
+            <Setter Property="Background" Value="#0B0B0D"/>
+        </Style>
+        <Style TargetType="ItemsControl">
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="Background" Value="#0B0B0D"/>
+        </Style>
+        <Style x:Key="RefundedText" TargetType="TextBlock">
+            <Setter Property="TextDecorations" Value="Strikethrough"/>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Padding="8" Background="#141418">
+            <StackPanel Orientation="Vertical">
+                <!-- Number filter -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                    <TextBlock Text="Number From:" VerticalAlignment="Center"/>
+                    <TextBox Width="80" Margin="6,0,12,0" Text="{Binding NumberFromText, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBlock Text="To:" VerticalAlignment="Center"/>
+                    <TextBox Width="80" Margin="6,0,12,0" Text="{Binding NumberToText, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Button Content="Apply" Command="{Binding ApplyNumberFilterCommand}"/>
+                </StackPanel>
+
+                <!-- Date filter -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                    <TextBlock Text="Start:" VerticalAlignment="Center"/>
+                    <ComboBox Width="80" Margin="6,0,0,0" ItemsSource="{Binding Years}" SelectedItem="{Binding StartYear}" IsEditable="True" IsReadOnly="True"/>
+                    <ComboBox Width="80" Margin="6,0,0,0" ItemsSource="{Binding Months}" SelectedItem="{Binding StartMonth}" IsEditable="True" IsReadOnly="True"/>
+                    <TextBox Width="50" Margin="6,0,12,0" Text="{Binding StartDayText, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBlock Text="End:" VerticalAlignment="Center"/>
+                    <ComboBox Width="80" Margin="6,0,0,0" ItemsSource="{Binding Years}" SelectedItem="{Binding EndYear}" IsEditable="True" IsReadOnly="True"/>
+                    <ComboBox Width="80" Margin="6,0,0,0" ItemsSource="{Binding Months}" SelectedItem="{Binding EndMonth}" IsEditable="True" IsReadOnly="True"/>
+                    <TextBox Width="50" Margin="6,0,12,0" Text="{Binding EndDayText, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Button Content="Apply" Command="{Binding ApplyDateFilterCommand}"/>
+                </StackPanel>
+
+                <!-- Type filter + paging -->
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Type:" VerticalAlignment="Center"/>
+                    <ComboBox Width="140" Margin="6,0,12,0" ItemsSource="{Binding ReceiptTypes}" SelectedItem="{Binding SelectedReceiptType}" IsEditable="True" IsReadOnly="True"/>
+                    <TextBlock Text="Page:" VerticalAlignment="Center"/>
+                    <Button Content="&lt;" Width="32" Margin="6,0,0,0" Command="{Binding PrevPageCommand}"/>
+                    <TextBlock Text="{Binding CurrentPage}" Width="40" TextAlignment="Center"/>
+                    <TextBlock Text="/"/>
+                    <TextBlock Text="{Binding TotalPages}" Width="40" TextAlignment="Center"/>
+                    <Button Content="&gt;" Width="32" Margin="6,0,0,0" Command="{Binding NextPageCommand}"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <Border DockPanel.Dock="Bottom" Padding="8" Background="#141418">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Initialize" Margin="0,0,12,0" Command="{Binding InitializeCommand}"/>
+                <TextBlock Text="Money made:" Margin="0,0,8,0"/>
+                <TextBlock Text="{Binding MoneyMade, StringFormat=C}" FontWeight="Bold"/>
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Receipts}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Expander IsExpanded="False" Margin="6">
+                            <Expander.Header>
+                                <DockPanel>
+                                    <TextBlock Text="{Binding HeaderText}" VerticalAlignment="Center"/>
+                                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                                        <Button Content="Open" Margin="6,0,0,0" Command="{Binding DataContext.OpenHtmlCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                                        <Button Content="Copy to Cart" Margin="6,0,0,0" Command="{Binding DataContext.CopyToCartCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                                        <Button Content="Refund Receipt" Margin="6,0,0,0" Background="#FF453A" Command="{Binding DataContext.DeleteReceiptCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Expander.Header>
+                            <ItemsControl ItemsSource="{Binding Items}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Margin="8,3">
+                                            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                                                <TextBlock Text="{Binding Name}" Width="160">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding RefundStatus}" Value="1">
+                                                                    <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBlock Text="{Binding Quantity}" Width="40"/>
+                                                <TextBlock Text="{Binding Price, StringFormat=C}" Width="100"/>
+                                                <TextBlock Text="{Binding DiscountPercent, StringFormat=P0}" Width="60"/>
+                                            </StackPanel>
+                                            <Button Content="Refund Item" DockPanel.Dock="Right" Command="{Binding DataContext.RefundItemCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Expander>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

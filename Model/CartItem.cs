@@ -6,6 +6,8 @@ namespace cashregister.Model // namespace for model types
     { // start class
         private int _quantity; // private backing field for Quantity property
         private decimal _discountPercent; // 0..1 fraction discount applied per item
+        private bool _refunded; // legacy flag (kept for compatibility)
+        private int _refundStatus; // 0 not refunded, 1 refunded, 2 refunddetails
 
         public string Name { get; set; } // the display name of the cart item
         public decimal Price { get; set; } // the unit price of the cart item
@@ -32,6 +34,34 @@ namespace cashregister.Model // namespace for model types
                 _discountPercent = normalized;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DiscountPercent)));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Subtotal)));
+            }
+        }
+
+        // Legacy boolean; maps to refund status 1 when true, 0 when false
+        public bool Refunded
+        {
+            get => _refunded;
+            set
+            {
+                if (_refunded == value) return;
+                _refunded = value;
+                if (value) _refundStatus = 1; else if (_refundStatus == 1) _refundStatus = 0;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Refunded)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RefundStatus)));
+            }
+        }
+
+        // 0 not refunded, 1 refunded, 2 refunddetails
+        public int RefundStatus
+        {
+            get => _refundStatus;
+            set
+            {
+                if (_refundStatus == value) return;
+                _refundStatus = value;
+                _refunded = (value == 1);
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RefundStatus)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Refunded)));
             }
         }
 

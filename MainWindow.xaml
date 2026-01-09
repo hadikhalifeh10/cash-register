@@ -100,7 +100,7 @@
                     <TextBlock FontFamily="Segoe MDL2 Assets" Text="" Foreground="{StaticResource LabelSecondary}" FontSize="20" Margin="10,0,0,0" VerticalAlignment="Center"/>
                 </StackPanel>
                 <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <ToggleButton x:Name="OrdersToggle" Content="Orders" Margin="4,0" Width="110" />
+                    <ToggleButton x:Name="OrdersToggle" Content="Orders" Margin="4,0" Width="110" Click="OrdersToggle_Click"/>
                     <Popup IsOpen="{Binding ElementName=OrdersToggle, Path=IsChecked}" PlacementTarget="{Binding ElementName=OrdersToggle}" Placement="Bottom" StaysOpen="False">
                         <Border Background="{StaticResource SecondarySurface}" BorderBrush="{StaticResource Separator}" BorderThickness="1" Padding="10" CornerRadius="10">
                             <StackPanel Orientation="Horizontal">
@@ -216,14 +216,101 @@
                             <Popup IsOpen="{Binding IsPayPopupOpen, Mode=TwoWay}" PlacementTarget="{Binding ElementName=PayToggle}" Placement="Bottom" StaysOpen="False">
                                 <Border Padding="10" CornerRadius="10">
                                     <StackPanel>
-                                        <Button Content="Credit" Command="{Binding PayCreditCommand}" Width="130" Margin="0,6,0,6" />
-                                        <Button Content="Debit" Command="{Binding PayDebitCommand}" Width="130" Margin="0,6,0,6" />
-                                        <Button Content="Cash" Command="{Binding ShowCashTenderCommand}" Width="130" Margin="0,6,0,6" />
+                                        <TextBlock Text="Choose bill type" Margin="0,0,0,4"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                            <Button Content="1 Bill" Width="90" Margin="0,0,8,0" Command="{Binding ChooseOneBillCommand}"/>
+                                            <Button Content="Split Bill" Width="90" Command="{Binding StartSplitBillCommand}"/>
+                                        </StackPanel>
+                                        <StackPanel Visibility="{Binding ShowPaymentMethods, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <Button Content="Credit" Command="{Binding PayCreditCommand}" Width="130" Margin="0,6,0,6" />
+                                            <Button Content="Debit" Command="{Binding PayDebitCommand}" Width="130" Margin="0,6,0,6" />
+                                            <Button Content="Cash" Command="{Binding ShowCashTenderCommand}" Width="130" Margin="0,6,0,6" />
+                                        </StackPanel>
                                     </StackPanel>
                                 </Border>
                             </Popup>
                             <Button Content="Cancel" Margin="10,0,0,0" Width="110" Command="{Binding CancelCommand}" />
                         </StackPanel>
+
+                        <!-- Split bill popup -->
+                        <Popup IsOpen="{Binding IsSplitPopupOpen}" Placement="Bottom" StaysOpen="False">
+                            <Border Background="{StaticResource SecondarySurface}" BorderBrush="{StaticResource Separator}" BorderThickness="1" Padding="12" CornerRadius="10">
+                                <StackPanel MinWidth="520">
+                                    <TextBlock Text="Split Bill" FontWeight="Bold" Margin="0,0,0,8"/>
+
+                                    <!-- Person navigator -->
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
+                                        <Button Content="◀" Width="36" Command="{Binding PrevSplitPersonCommand}"/>
+                                        <TextBlock Text="{Binding SelectedSplitPerson.Name}" Width="160" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" Margin="8,0"/>
+                                        <Button Content="▶" Width="36" Command="{Binding NextSplitPersonCommand}"/>
+                                        <Button Content="Add Person" Command="{Binding AddSplitPersonCommand}" Width="120" Margin="12,0,0,0"/>
+                                        <Button Content="Remove" Command="{Binding RemoveSplitPersonCommand}" Width="120" Margin="8,0,0,0"/>
+                                    </StackPanel>
+
+                                    <!-- Selected person editor -->
+                                    <ContentControl Content="{Binding SelectedSplitPerson}">
+                                        <ContentControl.ContentTemplate>
+                                            <DataTemplate>
+                                                <StackPanel>
+                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,6">
+                                                        <TextBox Width="160" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource DarkTextBox}"/>
+                                                        <TextBlock Text=" Payment:" Margin="8,0,4,0"/>
+                                                        <ComboBox Width="120" SelectedValue="{Binding PaymentMethod, Mode=TwoWay}">
+                                                            <ComboBoxItem Content="Credit"/>
+                                                            <ComboBoxItem Content="Debit"/>
+                                                            <ComboBoxItem Content="Cash"/>
+                                                        </ComboBox>
+                                                    </StackPanel>
+
+                                                    <TextBlock Text="Assign items:" Margin="0,0,0,4"/>
+                                                    <ItemsControl ItemsSource="{Binding DataContext.SplitItems, RelativeSource={RelativeSource AncestorType=Popup}}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
+                                                                    <TextBlock Text="{Binding Item.Name}" Margin="0,0,8,0" Width="160"/>
+                                                                    <TextBlock Text="{Binding Item.Subtotal, StringFormat=C}" Margin="0,0,8,0" Width="80"/>
+                                                                    <ComboBox Width="160"
+                                                                              ItemsSource="{Binding DataContext.SplitPeople, RelativeSource={RelativeSource AncestorType=Popup}}"
+                                                                              SelectedItem="{Binding AssignedTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                              DisplayMemberPath="Name"/>
+                                                                    <Button Content="Clear" Width="70" Margin="8,0,0,0" Command="{Binding DataContext.ClearSplitItemAssignmentCommand, RelativeSource={RelativeSource AncestorType=Popup}}" CommandParameter="{Binding}"/>
+                                                                </StackPanel>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+
+                                                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                                        <TextBlock Text="Subtotal:" Width="120"/>
+                                                        <TextBlock Text="{Binding Subtotal, StringFormat=C}" Width="120"/>
+                                                        <TextBlock Text="GST:" Width="80"/>
+                                                        <TextBlock Text="{Binding Gst, StringFormat=C}" Width="120"/>
+                                                        <TextBlock Text="QST:" Width="80"/>
+                                                        <TextBlock Text="{Binding Qst, StringFormat=C}" Width="120"/>
+                                                        <TextBlock Text="Total:" Width="80"/>
+                                                        <TextBlock Text="{Binding Total, StringFormat=C}" Width="120"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ContentControl.ContentTemplate>
+                                    </ContentControl>
+
+                                    <!-- Aggregate split summary -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                        <TextBlock Text="Assigned Total:"/>
+                                        <TextBlock Text="{Binding SplitAssignedTotal, StringFormat=C}" Margin="6,0,12,0"/>
+                                        <TextBlock Text="Left to Pay:"/>
+                                        <TextBlock Text="{Binding SplitLeftToPay, StringFormat=C}" Margin="6,0,12,0"/>
+                                        <TextBlock Text="Change:"/>
+                                        <TextBlock Text="{Binding SplitChange, StringFormat=C}" Margin="6,0,12,0"/>
+                                    </StackPanel>
+
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                                        <Button Content="Confirm" Command="{Binding ConfirmSplitPaymentCommand}" Width="120"/>
+                                        <Button Content="Cancel" Command="{Binding CancelSplitCommand}" Width="120" Margin="8,0,0,0"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </Popup>
 
                         <Popup IsOpen="{Binding IsCashTenderVisible}" Placement="Bottom" StaysOpen="False">
                             <Border Background="{StaticResource SecondarySurface}" BorderBrush="{StaticResource Separator}" BorderThickness="1" Padding="12" CornerRadius="10">

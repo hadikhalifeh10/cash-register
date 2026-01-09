@@ -35,5 +35,17 @@ namespace cashregister // application namespace
                 vm.IsNumericKeyboardVisible = true;
             }
         }
+
+        private void OrdersToggle_Click(object sender, RoutedEventArgs e)
+        {
+            OpenTransactionsWindow();
+        }
+
+        private void OpenTransactionsWindow()
+        {
+            var w = new TransactionsWindow();
+            w.Owner = this;
+            w.ShowDialog();
+        }
     } // end class
 } // end namespace

@@ -1,4 +1,6 @@
+using cashregister.Common;
 using cashregister.Model;
+using cashregister.Services;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -6,6 +8,7 @@ using System.Linq;
 using System.Collections.Specialized;
 using System.IO;
 using System.Text;
+using System.Windows;
 
 namespace cashregister.ViewModel
 {
@@ -43,6 +46,10 @@ namespace cashregister.ViewModel
         public RelayCommand ApplyItemDiscountCommand { get; }
         public RelayCommand ApplyTotalDiscountCommand { get; }
         public RelayCommand LoadReceiptCommand { get; }
+
+        // Add Close/Reset commands
+        public RelayCommand CloseAppCommand { get; }
+        public RelayCommand FactoryResetCommand { get; }
 
         private bool _isPayPopupOpen;
         public bool IsPayPopupOpen
@@ -106,15 +113,20 @@ namespace cashregister.ViewModel
         }
 
         private readonly ReceiptService _receiptService = new();
+        private readonly ConfigService _configService = new();
+        private readonly cashregister.Services.KeyboardService _keyboard = new();
 
         public MainViewModel()
         {
-            Items.Add(new Item { Name = "Apple", Price = 0.99m, Category = "base" });
-            Items.Add(new Item { Name = "Banana", Price = 0.59m, Category = "base" });
-            Items.Add(new Item { Name = "Chocolate", Price = 2.49m, Category = "base" });
-            Items.Add(new Item { Name = "Bread", Price = 1.99m, Category = "base" });
-            Items.Add(new Item { Name = "Milk", Price = 1.49m, Category = "base" });
-            Items.Add(new Item { Name = "Eggs", Price = 2.99m, Category = "base" });
+            // Initialize Commands
+            CloseAppCommand = new RelayCommand(_ => CloseApp());
+            FactoryResetCommand = new RelayCommand(_ => PerformFactoryReset());
+
+            Items.CollectionChanged += Items_CollectionChanged;
+            Cart.CollectionChanged += Cart_CollectionChanged;
+
+            // Load Inventory
+            LoadInventory();
 
             Categories.Add("base");
             SelectedCategory = "base";
@@ -134,13 +146,14 @@ namespace cashregister.ViewModel
             LoadReceiptCommand = new RelayCommand(_ => LoadReceipt());
 
             RebuildButtonsForSelectedCategory();
-            Items.CollectionChanged += Items_CollectionChanged;
-            Cart.CollectionChanged += Cart_CollectionChanged;
-
+            
             EnsureReceiptsFolder();
             InitializeCashTendering();
             InitializeKeyboard();
             InitializeSplit();
+
+            // Load App State (Cart)
+            _configService.LoadState(Cart);
         }
 
         private void EnsureReceiptsFolder() => _receiptService.EnsureReceiptsFolder();
@@ -161,7 +174,52 @@ namespace cashregister.ViewModel
             if (!TryLoadReceipt(number)) { StatusMessage = $"Receipt {number} not found"; }
         }
 
-        // Cash tendering properties/commands
+        private void LoadInventory()
+        {
+            Items.Clear();
+            var dbItems = _receiptService.LoadInventory();
+            if (dbItems.Any())
+            {
+                foreach (var i in dbItems) Items.Add(i);
+            }
+            else
+            {
+                // Seed defaults
+                var defaults = new[]
+                {
+                    new Item { Name = "Apple", Price = 0.99m, Category = "base" },
+                    new Item { Name = "Banana", Price = 0.59m, Category = "base" },
+                    new Item { Name = "Chocolate", Price = 2.49m, Category = "base" },
+                    new Item { Name = "Bread", Price = 1.99m, Category = "base" },
+                    new Item { Name = "Milk", Price = 1.49m, Category = "base" },
+                    new Item { Name = "Eggs", Price = 2.99m, Category = "base" }
+                };
+                foreach (var d in defaults)
+                {
+                    _receiptService.SaveInventoryItem(d); // Save grabs ID
+                    Items.Add(d);
+                }
+            }
+        }
+
+        private void CloseApp()
+        {
+            _configService.SaveState(Cart);
+            Application.Current.Shutdown();
+        }
+
+        private void PerformFactoryReset()
+        {
+            if (MessageBox.Show("Are you sure you want to delete all data (receipts, inventory, settings)? This cannot be undone.", "Factory Reset", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+            {
+                _receiptService.FactoryReset();
+                _configService.ClearState();
+                Cart.Clear();
+                LoadInventory(); // re-seed defaults
+                StatusMessage = "Factory reset complete.";
+            }
+        }
+
         private bool _isCashTenderVisible;
         public bool IsCashTenderVisible
         {
@@ -189,8 +247,8 @@ namespace cashregister.ViewModel
             private set { if (_cashTenderAmount == value) return; _cashTenderAmount = value; OnPropertyChanged(nameof(CashTenderAmount)); OnPropertyChanged(nameof(CashChange)); OnPropertyChanged(nameof(CashDue)); }
         }
 
-        public decimal CashChange => CashTenderAmount > Total ? CashTenderAmount - Total : 0m;
-        public decimal CashDue => CashTenderAmount < Total ? Total - CashTenderAmount : 0m;
+        public decimal CashChange => CashTenderAmount > CashTotalRounded ? CashTenderAmount - CashTotalRounded : 0m;
+        public decimal CashDue => CashTenderAmount < CashTotalRounded ? CashTotalRounded - CashTenderAmount : 0m;
 
         public RelayCommand ShowCashTenderCommand { get; private set; }
         public RelayCommand ConfirmCashPaymentCommand { get; private set; }
@@ -201,10 +259,14 @@ namespace cashregister.ViewModel
             CashTenderAmount = amount;
         }
 
+        private static decimal RoundToNearestFiveCents(decimal amount) => Math.Round(amount * 20m, MidpointRounding.AwayFromZero) / 20m;
+        public decimal CashTotalRounded => RoundToNearestFiveCents(Total);
+
         private void ConfirmCashPayment()
         {
             // If tender is enough, complete and save receipt; otherwise keep popup open
-            if (CashTenderAmount >= Total)
+            var dueTotal = CashTotalRounded;
+            if (CashTenderAmount >= dueTotal)
             {
                 var number = GetNextReceiptNumber();
                 SaveReceipt(number, "Cash");
@@ -217,6 +279,13 @@ namespace cashregister.ViewModel
             {
                 StatusMessage = $"Cash due: {CashDue:C}";
             }
+        }
+
+        private bool _isAdminMode;
+        public bool IsAdminMode
+        {
+            get => _isAdminMode;
+            set { if (_isAdminMode == value) return; _isAdminMode = value; OnPropertyChanged(nameof(IsAdminMode)); CommandManagerInvalidateRequerySuggested(); }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

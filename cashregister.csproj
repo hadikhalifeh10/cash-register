@@ -9,6 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Exclude VanillaTwist.MEV subfolder from compilation -->
+    <Compile Remove="VanillaTwist.MEV\**" />
+    <None Remove="VanillaTwist.MEV\**" />
+    <EmbeddedResource Remove="VanillaTwist.MEV\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.7" />
   </ItemGroup>
 

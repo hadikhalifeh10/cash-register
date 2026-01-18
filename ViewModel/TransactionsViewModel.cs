@@ -5,6 +5,8 @@ using System.Linq;
 using System.Windows;
 using System;
 using System.Collections.Generic;
+using cashregister.Services;
+using cashregister.Common;
 
 namespace cashregister.ViewModel
 {

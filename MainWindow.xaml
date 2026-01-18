@@ -95,12 +95,37 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="Cash Register" FontSize="22" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}"/>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Grid.Column="1" Text="Zesty" FontSize="22" FontWeight="Bold" Foreground="HotPink" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Style.Triggers>
+                                <EventTrigger RoutedEvent="Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:1" RepeatBehavior="Forever" AutoReverse="True"/>
+                                            <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)">
+                                                <LinearDoubleKeyFrame KeyTime="0%" Value="-20" />
+                                                <LinearDoubleKeyFrame KeyTime="50%" Value="20" />
+                                                <LinearDoubleKeyFrame KeyTime="100%" Value="-20" />
+                                            </DoubleAnimationUsingKeyFrames>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Style.Triggers>
+                            <Setter Property="RenderTransform">
+                                <Setter.Value>
+                                    <TranslateTransform/>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBox Height="34" Width="420" Style="{StaticResource DarkTextBox}"/>
                     <TextBlock FontFamily="Segoe MDL2 Assets" Text="" Foreground="{StaticResource LabelSecondary}" FontSize="20" Margin="10,0,0,0" VerticalAlignment="Center"/>
                 </StackPanel>
                 <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <ToggleButton x:Name="OrdersToggle" Content="Orders" Margin="4,0" Width="110" Click="OrdersToggle_Click"/>
+                    <ToggleButton x:Name="OrdersToggle" Content="Orders" Margin="4,0" Width="80" Click="OrdersToggle_Click"/>
                     <Popup IsOpen="{Binding ElementName=OrdersToggle, Path=IsChecked}" PlacementTarget="{Binding ElementName=OrdersToggle}" Placement="Bottom" StaysOpen="False">
                         <Border Background="{StaticResource SecondarySurface}" BorderBrush="{StaticResource Separator}" BorderThickness="1" Padding="10" CornerRadius="10">
                             <StackPanel Orientation="Horizontal">
@@ -109,7 +134,8 @@
                             </StackPanel>
                         </Border>
                     </Popup>
-                    <Button Content="Help" Margin="10,0,0,0" Width="90"/>
+                    <ToggleButton x:Name="AdminToggle" Content="Admin" Margin="6,0,0,0" Width="80" Click="AdminToggle_Click"/>
+                    <Button Content="Close" Margin="6,0,0,0" Width="80" Command="{Binding CloseAppCommand}"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -151,7 +177,7 @@
                     </TabControl>
 
                     <!-- Add new item row: textboxes on one row, Add button underneath -->
-                    <StackPanel Orientation="Vertical" Margin="0,10,0,0" DockPanel.Dock="Bottom">
+                    <StackPanel Orientation="Vertical" Margin="0,10,0,0" DockPanel.Dock="Bottom" Visibility="{Binding IsAdminMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
                             <TextBox Name="NewItemNameBox" Tag="NewItemName" Width="160" Height="28" Text="{Binding NewItemName, UpdateSourceTrigger=PropertyChanged}" GotFocus="TextBox_GotFocus_SetAlpha" />
                             <TextBox Name="NewItemPriceBox" Tag="NewItemPriceText" Width="100" Height="28" Margin="6,0,0,0" Text="{Binding NewItemPriceText, UpdateSourceTrigger=PropertyChanged}" GotFocus="TextBox_GotFocus_SetNumeric" />
@@ -325,7 +351,10 @@
                         </Popup>
 
                         <Border Background="{StaticResource SecondarySurface}" BorderBrush="{StaticResource Separator}" BorderThickness="1" Padding="8" Margin="0,8,0,0" CornerRadius="8">
-                            <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="{StaticResource LabelSecondary}" />
+                            <DockPanel>
+                                <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="{StaticResource LabelSecondary}" VerticalAlignment="Center"/>
+                                <Button Content="Reset App" DockPanel.Dock="Right" Width="80" FontSize="10" Background="#330000" Command="{Binding FactoryResetCommand}"/>
+                            </DockPanel>
                         </Border>
                     </StackPanel>
                 </DockPanel>

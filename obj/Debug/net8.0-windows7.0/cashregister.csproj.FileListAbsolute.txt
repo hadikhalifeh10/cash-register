@@ -48,3 +48,5 @@ C:\Users\hadik\source\repos\cashregister\cashregister\obj\Debug\net8.0-windows7.
 C:\Users\hadik\source\repos\cashregister\cashregister\obj\Debug\net8.0-windows7.0\cashregi.4F183564.Up2Date
 C:\Users\hadik\source\repos\cashregister\cashregister\obj\Debug\net8.0-windows7.0\TransactionsWindow.g.cs
 C:\Users\hadik\source\repos\cashregister\cashregister\obj\Debug\net8.0-windows7.0\TransactionsWindow.baml
+C:\Users\hadik\source\repos\cashregister\cashregister\obj\Debug\net8.0-windows7.0\AdminWindow.g.cs
+C:\Users\hadik\source\repos\cashregister\cashregister\obj\Debug\net8.0-windows7.0\AdminWindow.baml

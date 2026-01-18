@@ -47,5 +47,12 @@ namespace cashregister // application namespace
             w.Owner = this;
             w.ShowDialog();
         }
+
+        private void AdminToggle_Click(object sender, RoutedEventArgs e)
+        {
+            var w = new AdminWindow();
+            w.Owner = this;
+            w.ShowDialog();
+        }
     } // end class
 } // end namespace
